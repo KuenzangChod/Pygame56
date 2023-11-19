@@ -1,0 +1,92 @@
+import unittest
+import pygame
+import random
+
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+
+
+class AvoidTheBlocksGame(unittest.TestCase):
+
+    def setUp(self):
+        pygame.init()
+        size = (800, 600)
+        self.screen = pygame.display.set_mode(size)
+        pygame.display.set_caption("Avoid the blocks")
+
+        self.player_width = 50
+        self.player_height = 50
+        self.player_x = 375
+        self.player_y = 525
+        self.player_speed = 0
+
+        self.obstacle_list = []
+        for i in range(10):
+            obstacle_x = random.randrange(0, 750)
+            obstacle_y = random.randrange(0, 500)
+            obstacle_width = 50
+            obstacle_height = 50
+            self.obstacle_list.append([obstacle_x, obstacle_y, obstacle_width, obstacle_height])
+
+        self.font = pygame.font.SysFont('Calibri', 25, True, False)
+
+        self.score = 0
+
+    def test_obstacle_collision(self):
+        self.player_x = self.obstacle_list[0][0] + self.obstacle_list[0][2] + 1
+        self.player_y = self.obstacle_list[0][1] + self.obstacle_list[0][3] + 1
+        self.player_speed = 5
+
+        game_over = False
+        while not game_over:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    game_over = True
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        self.player_speed = -5
+                    elif event.key == pygame.K_RIGHT:
+                        self.player_speed = 5
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                        self.player_speed = 0
+
+            self.player_x += self.player_speed
+
+            for obstacle in self.obstacle_list:
+                if self.player_x + self.player_width > obstacle[0] and self.player_x < obstacle[0] + obstacle[2] and self.player_y + self.player_height > obstacle[1] and self.player_y < obstacle[1] + obstacle[3]:
+                    game_over = True
+
+        self.assertTrue(game_over)
+
+    def test_display_score(self):
+        done = False
+        clock = pygame.time.Clock()
+
+        while not done:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    done = True
+
+            self.score += 1
+
+            self.screen.fill(BLACK)
+
+            for obstacle in self.obstacle_list:
+                pygame.draw.rect(self.screen, WHITE, [obstacle[0], obstacle[1], obstacle[2], obstacle[3]])
+            pygame.draw.rect(self.screen, WHITE, [self.player_x, self.player_y, self.player_width, self.player_height])
+            score_text = self.font.render("Score: " + str(self.score), True, WHITE)
+            self.screen.blit(score_text, [10, 10])
+
+            pygame.display.flip()
+
+            clock.tick(60)
+
+        self.assertTrue(done)
+
+    def tearDown(self):
+        pygame.quit()
+
+
+if __name__ == '__main__':
+    unittest.main()
